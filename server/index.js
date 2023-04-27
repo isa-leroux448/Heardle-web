@@ -8,8 +8,8 @@ global.access_token = ''
 
 dotenv.config()
 
-var spotify_client_id = '4efc662ed4e249259fea158e9aaf2082'
-var spotify_client_secret = 'e0ba564ce8fc4455aff7a0f43f7ba2d3'
+var spotify_client_id = ''
+var spotify_client_secret = ''
 
 var spotify_redirect_uri = 'http://localhost:3000/auth/callback'
 
