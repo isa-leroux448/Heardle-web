@@ -148,17 +148,35 @@ function WebPlayback(props) {
     const [player, setPlayer] = useState(undefined);
     const [current_track, setTrack] = useState(track);
     const [options, setOptions] = useState([]);
-    const [showPopup, setShowPopup] = useState(false);
+    const [showCorrect, setShowCorrect] = useState(false);
+    const [showIncorrect, setShowIncorrect]= useState(false);
+    const [showGameOver, setShowGameOver]= useState(false);
+    const [selectedValue, setSelectedValue] = useState(''); 
+
+    const getValue = e => {
+      setSelectedValue(e.value);
+    }
 
     const handleClick = () => {
-        //console.log(option.value)
-        console.log(current_track.id)
-
-        setShowPopup(true);
-      };
+      if ((guesses + 1) <= attempts) {
+        if (current_track.id == selectedValue) {
+          setShowCorrect(true);
+        } else if((current_track.id != selectedValue) && (guesses + 1 > 5)) {
+          setShowGameOver(true);
+        } else {
+          setShowIncorrect(true);
+        }
+        guesses ++;
+      }
+      console.log("attempts " + attempts)
+      console.log("guesses " + guesses)
+      console.log("nope")
+    };
 
     const handleClose = () => {
-    setShowPopup(false);
+    setShowCorrect(false);
+    setShowIncorrect(false);
+    setShowGameOver(false);
     };
 
     const handleSelectChange = (searchText) => {
@@ -223,14 +241,19 @@ function WebPlayback(props) {
 
         // Close popup when clicked outside of popup
         const handleOutsideClick = (event) => {
-            if (showPopup && !event.target.closest('.popup-inner')) {
-              setShowPopup(false);
+            if ((showCorrect && !event.target.closest('.popup-inner')) ||
+            (showGameOver && !event.target.closest('.popup-inner')) ||
+            (showIncorrect && !event.target.closest('.popup-inner')))
+             {
+              setShowCorrect(false);
+              setShowIncorrect(false);
+              setShowGameOver(false);
             }
           };
           window.addEventListener('click', handleOutsideClick);
           return () => window.removeEventListener('click', handleOutsideClick);
 
-    }, [showPopup]);
+    }, []);
 
     if (!is_active) { 
         return (
@@ -263,9 +286,61 @@ function WebPlayback(props) {
                     name="color"
                     options={options}
                     onInputChange={handleSelectChange}
+                    onChange={getValue}
                     styles={customStyles}
                 />
                 <button style={{display: 'flex'}} className="btn-spotify" onClick={handleClick}>Submit guess</button>
+                {showGameOver && (
+        <div className="popup">
+          <div className="popup-inner">
+            <button className="popup-close" onClick={handleClose}>
+              <span className="close-icon">&times;</span>
+            </button>
+            <h2>Out of guesses</h2>
+            <p>The correct song was: </p>
+            <br></br>
+            <h4>{current_track.name}</h4>
+            <p>{current_track.artists[0].name}</p>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <img src={current_track.album.images[0].url} className="now-playing__cover" alt="" style={{ paddingTop: '20px' }}/>
+            <br></br>
+            <button style={{display: 'flex'}} className="btn-spotify" onClick={refreshPage}>Play again</button>
+            </div>
+          </div>
+        </div>
+      )}
+      {showCorrect && (
+        <div className="popup">
+          <div className="popup-inner">
+            <button className="popup-close" onClick={handleClose}>
+              <span className="close-icon">&times;</span>
+            </button>
+            <h2>Congratulations!</h2>
+            <p>You guessed the song</p>
+            <br></br>
+            <h4>{current_track.name}</h4>
+            <p>{current_track.artists[0].name}</p>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <img src={current_track.album.images[0].url} className="now-playing__cover" alt="" style={{ paddingTop: '20px' }}/>
+            <br></br>
+            <button style={{display: 'flex'}} className="btn-spotify" onClick={refreshPage}>Play again</button>
+            </div>
+          </div>
+        </div>
+      )}
+      {showIncorrect && (
+        <div className="popup">
+          <div className="popup-inner">
+            <button className="popup-close" onClick={handleClose}>
+              <span className="close-icon">&times;</span>
+            </button>
+            <h3>Incorrect guess</h3>
+            <br></br>
+            <p>Give it another try!</p>
+          </div>
+        </div>
+      )}
+
                     </div>
                 </div>
             </>
