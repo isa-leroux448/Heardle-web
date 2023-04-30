@@ -33,6 +33,7 @@ var selectedTrack;
 var attempts;
 var token;
 var guesses;
+var trackLink;
 
 async function chooseTrack(token, trackUri) {
     const response = await fetch(`https://api.spotify.com/v1/me/player/play`, {
@@ -110,8 +111,19 @@ async function searchTracks(query, token) {
     const trackIds = data.items.map(item => item.track.id);
     return trackIds;
 }  
-  
 
+async function getSpotifyTrackUrl(token, trackId) {
+  const response = await fetch(`https://api.spotify.com/v1/tracks/${trackId}`, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  });
+  const data = await response.json();
+  return data.external_urls.spotify;
+}
+  
 async function playGame(authToken) {
     console.log("Attempts: " + String(attempts));
     console.log(2**attempts*1000);
@@ -135,6 +147,8 @@ async function playGame(authToken) {
         pauseTrack(authToken)
         attempts += 1;
     }
+    trackLink = await getSpotifyTrackUrl(authToken, selectedTrack);
+    console.log(trackLink)
 }
 
 function refreshPage() {
@@ -158,36 +172,43 @@ function WebPlayback(props) {
     }
 
     const handleClick = () => {
+      console.log(current_track.id)
+      console.log("Selected: " + selectedValue)
       if ((guesses + 1) <= attempts) {
         if (current_track.id == selectedValue) {
+          console.log("correct")
           setShowCorrect(true);
-        } else if((current_track.id != selectedValue) && (guesses + 1 > 5)) {
+        } else if((current_track.id != selectedValue) && (guesses + 1 > 4)) {
+          console.log("gameover")
           setShowGameOver(true);
         } else {
           setShowIncorrect(true);
+          console.log("incorrect")
         }
         guesses ++;
       }
       console.log("attempts " + attempts)
       console.log("guesses " + guesses)
-      console.log("nope")
     };
 
     const handleClose = () => {
-    setShowCorrect(false);
-    setShowIncorrect(false);
-    setShowGameOver(false);
+      setShowCorrect(false);
+      setShowIncorrect(false);
+      setShowGameOver(false);
+      setSelectedValue('');
     };
 
     const handleSelectChange = (searchText) => {
-        searchTracks(searchText, token)
-          .then(result => {
-            console.log(result)
-            setOptions(result);
-          })
-          .catch(error => {
-            console.error(error);
-          });
+        if (searchText != null) {
+          searchTracks(searchText, token)
+            .then(result => {
+              console.log(result)
+              setOptions(result);
+            })
+            .catch(error => {
+              console.error(error);
+            });
+        }
       }
 
     useEffect(() => {
@@ -203,7 +224,7 @@ function WebPlayback(props) {
         window.onSpotifyWebPlaybackSDKReady = () => {
 
             const player = new window.Spotify.Player({
-                name: 'Web Playback SDK',
+                name: 'Heardle Web Player',
                 getOAuthToken: cb => { cb(props.token); },
                 volume: 0.5
             });
@@ -280,7 +301,7 @@ function WebPlayback(props) {
                     className="basic-single"
                     style={{ width: "80%" }}
                     classNamePrefix="select"
-                    isClearable={true}
+                    isClearable={false}
                     isSearchable={true}
                     autosize={false}
                     name="color"
